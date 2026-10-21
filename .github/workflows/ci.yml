@@ -1,0 +1,22 @@
+name: API - build and tests
+on:
+  push:
+  pull_request:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install dependencies (npm ci once lockfile is committed)
+        run: |
+          if [ -f package-lock.json ]; then npm ci --no-audit --no-fund; else npm install --no-audit --no-fund; fi
+      - name: Unit tests
+        run: npm test -- --coverage
+      - name: Build
+        run: npm run build
+      - name: Validate Docker image build
+        run: docker build -t windops-api:ci .

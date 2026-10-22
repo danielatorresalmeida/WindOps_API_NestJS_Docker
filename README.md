@@ -116,6 +116,29 @@ npm run build
 
 O ficheiro **`package-lock.json` já está versionado**. Para instalações reproduzíveis, utilizar `npm ci` em CI e nas construções Docker. Ao alterar dependências, atualizar e rever também o lockfile.
 
+## Testes de integração com PostgreSQL
+
+Os testes unitários (`npm test`) usam repositórios simulados (*mocks*). Os testes de integração (`npm run test:integration`) iniciam uma aplicação NestJS real, executam as migrações numa **base PostgreSQL isolada** e verificam os pedidos HTTP, a persistência SQL e as respostas HTTP 400/404.
+
+O serviço `db-test` utiliza exclusivamente a porta **5435**, uma base `windops_test` e um volume diferente da base de desenvolvimento (`windops`, porta 5434). O teste recusa ligações a outras bases de dados.
+
+```powershell
+# Na pasta do projeto, com Docker Desktop em execução:
+docker compose -f compose.integration.yaml up -d --wait
+$env:DATABASE_URL = "postgresql://windops_test:windops_test_local_only@127.0.0.1:5435/windops_test"
+$env:NODE_ENV = "test"
+npm run test:integration
+Remove-Item Env:DATABASE_URL
+Remove-Item Env:NODE_ENV
+
+# Remover APENAS os containers e o volume da base de testes:
+docker compose -f compose.integration.yaml down -v
+```
+
+**Não executar `docker compose down -v` sem o ficheiro de testes**, porque esse comando, na configuração principal, pode eliminar os dados de desenvolvimento.
+
+A CI GitHub Actions inicia o PostgreSQL 16 como serviço isolado, executa os testes unitários, os testes de integração e o build da aplicação e da imagem Docker. O check protegido mantém o nome **`validate`**.
+
 ## Endpoints
 
 | Método | URL | Descrição |
@@ -145,7 +168,7 @@ Exemplo de POST `/turbines`:
 
 ## Integração contínua (CI)
 
-O workflow `.github/workflows/ci.yml` executa-se em `push` e `pull_request`. O job `validate` instala dependências com `npm ci`, executa os testes Jest, compila o NestJS e verifica `docker build`. **Não publica imagens nem executa deployment.**
+O workflow `.github/workflows/ci.yml` executa-se em `push` e `pull_request`. O job `validate` instala dependências com `npm ci`, executa testes unitários Jest, inicia PostgreSQL 16 para os testes de integração, compila o NestJS e verifica `docker build`. **Não publica imagens nem executa deployment.**
 
 ## O que aprender e explicar numa entrevista
 

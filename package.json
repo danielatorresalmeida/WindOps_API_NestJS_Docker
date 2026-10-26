@@ -2,7 +2,7 @@
   "name": "windops-api",
   "version": "0.1.0",
   "private": true,
-  "description": "API educativa de gestao de turbinas eolicas e manutencao, em NestJS e PostgreSQL.",
+  "description": "Educational REST API for wind turbines and maintenance, built with NestJS and PostgreSQL.",
   "license": "MIT",
   "scripts": {
     "build": "nest build",

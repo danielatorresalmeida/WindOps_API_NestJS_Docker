@@ -1,27 +1,27 @@
 # WindOps API — NestJS + PostgreSQL + Docker
 
-Projeto **educativo e independente**, criado para aprender NestJS, TypeScript, APIs REST, PostgreSQL, Docker e GitHub Actions. Utiliza dados fictícios de turbinas eólicas e intervenções de manutenção. **Não é um projeto da ANNEA nem da FloLabs.**
+**Independent educational project** built to learn NestJS, TypeScript, REST APIs, PostgreSQL, Docker and GitHub Actions. It uses fictional wind turbine and maintenance data. **It is not an ANNEA or FloLabs project.**
 
-> **Estado inicial:** os ficheiros foram preparados e revistos estaticamente. Ainda é necessário instalar dependências e executar os testes e o Docker no teu computador. Não afirmar que foi testado em produção.
+> **Validation status (22 October 2026):** GitHub Actions successfully completed the unit tests, application build and Docker image build. Running the full stack locally with Docker Compose has not yet been confirmed. This project has not been deployed or validated in production.
 
-## Funcionalidades
+## Features
 
-- Criar e consultar turbinas (nome, localização, capacidade em kW, estado).
-- Atualizar o estado para `ACTIVE`, `MAINTENANCE` ou `OFFLINE`.
-- Registar e consultar eventos de manutenção associados a uma turbina.
-- Validação dos pedidos com `class-validator` e respostas HTTP apropriadas.
-- Persistência real em PostgreSQL via TypeORM, **sem `synchronize: true`**; a aplicação executa migração inicial versionada.
-- Dockerfile em duas etapas, Docker Compose com healthchecks e workflow GitHub Actions para testes, build e construção de imagem.
+- Create and retrieve wind turbines (name, location, capacity in kW and status).
+- Update a turbine's status to `ACTIVE`, `MAINTENANCE` or `OFFLINE`.
+- Record and retrieve maintenance events for a turbine.
+- Validate requests with `class-validator` and return appropriate HTTP responses.
+- Persist data in PostgreSQL via TypeORM, using an initial versioned migration instead of `synchronize: true`.
+- Use a multi-stage Dockerfile, Docker Compose with health checks, and a GitHub Actions workflow for tests, application builds and Docker image builds.
 
-## Requisitos (Windows)
+## Prerequisites (Windows)
 
-- Docker Desktop com Docker Compose (Linux containers / WSL 2).
-- VS Code. Para executar fora do Docker: Node.js 22 e npm.
-- Ligação à internet na primeira instalação de dependências/imagens.
+- Docker Desktop with Docker Compose (Linux containers / WSL 2).
+- VS Code. To run the API outside Docker: Node.js 22 and npm.
+- An internet connection for the first dependency installation and image download.
 
-## Arrancar — via Docker Compose
+## Run with Docker Compose
 
-No PowerShell, dentro da pasta do projeto:
+In PowerShell, from the project directory:
 
 ```powershell
 docker compose up --build -d
@@ -29,13 +29,13 @@ docker compose ps
 Invoke-RestMethod http://localhost:3000/health
 ```
 
-Resposta esperada (após containers estarem saudáveis):
+Expected response once the containers are healthy:
 
 ```json
 {"status":"ok","service":"windops-api"}
 ```
 
-Criar a primeira turbina:
+Create your first turbine:
 
 ```powershell
 $turbine = Invoke-RestMethod -Uri http://localhost:3000/turbines `
@@ -44,13 +44,13 @@ $turbine = Invoke-RestMethod -Uri http://localhost:3000/turbines `
 $turbine
 ```
 
-Consultar todas:
+List all turbines:
 
 ```powershell
 Invoke-RestMethod http://localhost:3000/turbines
 ```
 
-Mudar estado:
+Change a turbine's status:
 
 ```powershell
 Invoke-RestMethod -Uri "http://localhost:3000/turbines/$($turbine.id)/status" `
@@ -58,31 +58,31 @@ Invoke-RestMethod -Uri "http://localhost:3000/turbines/$($turbine.id)/status" `
   -Body '{"status":"MAINTENANCE"}'
 ```
 
-Registar manutenção:
+Add a maintenance event:
 
 ```powershell
 Invoke-RestMethod -Uri "http://localhost:3000/turbines/$($turbine.id)/maintenance" `
   -Method Post -ContentType 'application/json' `
-  -Body '{"notes":"Inspecao visual realizada"}'
+  -Body '{"notes":"Visual inspection completed"}'
 ```
 
-Listar intervenções:
+List maintenance events:
 
 ```powershell
 Invoke-RestMethod "http://localhost:3000/turbines/$($turbine.id)/maintenance"
 ```
 
-Parar sem apagar dados:
+Stop the containers without deleting stored data:
 
 ```powershell
 docker compose down
 ```
 
-**Atenção:** `docker compose down -v` também apaga o volume PostgreSQL e os dados de teste!
+**Important:** `docker compose down -v` also removes the PostgreSQL volume and its test data!
 
-## Desenvolver fora do container da API
+## Develop outside the API container
 
-Arranca apenas a base de dados:
+Start only the database container:
 
 ```powershell
 docker compose up -d db
@@ -91,59 +91,60 @@ npm install
 npm run start:dev
 ```
 
-A ligação é local: `localhost:5434`. Executar testes (não exige PostgreSQL, pois os repositórios são simulados):
+The database is available locally at `localhost:5434`. Run the unit tests (which use mocked repositories and do not require PostgreSQL) and build the application:
 
 ```powershell
 npm test
 npm run build
 ```
 
-Depois do primeiro `npm install`, adiciona **package-lock.json ao repositório**. O Dockerfile e a CI utilizam `npm ci` quando o lockfile existe, e `npm install` enquanto não tiver sido criado.
+The repository includes `package-lock.json`. Both the Dockerfile and GitHub Actions use `npm ci` when this lockfile is available.
 
 ## Endpoints
 
-| Método | URL | Descrição |
+| Method | URL | Description |
 |---|---|---|
-| GET | `/health` | Estado da API |
-| GET | `/turbines` | Listar turbinas |
-| POST | `/turbines` | Criar turbina |
-| GET | `/turbines/:id` | Consultar turbina |
-| PATCH | `/turbines/:id/status` | Alterar estado |
-| GET | `/turbines/:id/maintenance` | Listar manutenções |
-| POST | `/turbines/:id/maintenance` | Criar manutenção |
+| GET | `/health` | API health status |
+| GET | `/turbines` | List turbines |
+| POST | `/turbines` | Create turbine |
+| GET | `/turbines/:id` | Retrieve turbine |
+| PATCH | `/turbines/:id/status` | Update turbine status |
+| GET | `/turbines/:id/maintenance` | List maintenance events |
+| POST | `/turbines/:id/maintenance` | Add maintenance event |
 
-Exemplo de POST `/turbines`:
+Example POST request to `/turbines`:
 
 ```json
 {"name":"T-01","location":"Cascais","capacityKw":2500}
 ```
 
-## O que aprender e explicar numa entrevista
+## Concepts to discuss in an interview
 
-1. **NestJS:** Controllers recebem pedidos; Services aplicam regras; DTOs validam o input; Providers são injetados pelo Nest.
-2. **PostgreSQL:** dados relacionais, chave estrangeira e migração versionada para tornar o esquema reproduzível.
-3. **Docker:** Dockerfile multi-stage isola dependências de build; Compose liga API e base de dados; healthchecks indicam disponibilidade.
-4. **CI:** GitHub Actions executa os testes, o build TypeScript e valida a construção da imagem; sem deployment automático.
-5. **Limitações:** ainda não há autenticação, autorização, paginação, observabilidade nem testes de integração com BD real. **Não expor esta API publicamente** antes de implementar segurança.
+1. **NestJS:** controllers handle HTTP requests, services implement business logic, DTOs validate input, and providers use dependency injection.
+2. **PostgreSQL:** relational data, foreign keys and versioned migrations make the schema reproducible.
+3. **Docker:** a multi-stage Dockerfile separates build and runtime dependencies; Compose connects the API and database; health checks report service readiness.
+4. **CI:** GitHub Actions runs tests, builds the TypeScript application and validates the Docker image build; there is no automatic deployment.
+5. **Limitations:** authentication, authorization, pagination, observability and database integration tests are not covered by the current implementation or CI workflow. **Do not expose this API publicly** before implementing appropriate security.
 
-## Próximas melhorias reais
+## Planned improvements
 
-- Adicionar testes de integração com PostgreSQL numa pipeline de CI.
-- Criar métricas e alertas simulados (p. ex. horas desde última manutenção).
-- Criar uma interface de consulta com Next.js, mantendo-a separada do backend NestJS.
-- Implementar autenticação, autorização, gestão de segredos e deployment seguro.
+- Add PostgreSQL integration tests to the CI pipeline.
+- Add simulated metrics and alerts (for example, hours since last maintenance).
+- Build a Next.js frontend, keeping it separate from the NestJS backend.
+- Implement authentication, authorization, secrets management and secure deployment.
 
-## Git: workflow recomendado
+## Git workflow
 
 ```powershell
-git init
-git checkout -b develop
+git checkout -b feature/your-change
+# Make changes, test them, and commit.
 git add .
-git commit -m "feat: scaffold WindOps API with NestJS and Docker"
+git commit -m "docs: describe your change"
+git push -u origin feature/your-change
 ```
 
-Criar no GitHub um **novo repositório**, sem alterar o DevFlow Hub. Abrir uma feature branch para cada melhoria e integrar em `develop` após testes. Não afirmar experiência Docker comprovada até executar os comandos localmente, analisar os logs e perceber como a imagem foi construída.
+Use a dedicated feature branch for each improvement and open a pull request after testing. Keep documentation about Docker validation accurate: CI image builds are verified, but local Compose operation has not yet been confirmed.
 
-## Licença
+## License
 
-MIT (ver LICENSE).
+MIT (see `LICENSE`).

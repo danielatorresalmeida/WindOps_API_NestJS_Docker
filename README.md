@@ -2,7 +2,7 @@
 
 Projeto **educativo e independente**, criado para aprender NestJS, TypeScript, APIs REST, PostgreSQL, Docker e GitHub Actions. Utiliza dados fictícios de turbinas eólicas e intervenções de manutenção. **Não é um projeto da ANNEA nem da FloLabs.**
 
-> **Estado inicial:** os ficheiros foram preparados e revistos estaticamente. Ainda é necessário instalar dependências e executar os testes e o Docker no teu computador. Não afirmar que foi testado em produção.
+> **Estado atual (CI, 22/10/2026):** a pipeline do GitHub Actions concluiu com sucesso os testes unitários, a compilação da aplicação e a construção da imagem Docker. A execução local com Docker Compose ainda não foi confirmada. O projeto não foi validado nem disponibilizado em produção.
 
 ## Funcionalidades
 

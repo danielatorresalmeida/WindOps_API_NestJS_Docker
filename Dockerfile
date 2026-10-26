@@ -1,8 +1,8 @@
-# Multi-stage build: imagem final sem dependências de desenvolvimento.
+# Multi-stage build: keep development dependencies out of the runtime image.
 FROM node:22-alpine AS build
 WORKDIR /app
 COPY package*.json ./
-# Primeiro executar npm install localmente e versionar package-lock.json.
+# Use npm ci when the committed lockfile is available.
 RUN if [ -f package-lock.json ]; then npm ci --no-audit --no-fund; else npm install --no-audit --no-fund; fi
 COPY tsconfig.json nest-cli.json ./
 COPY src ./src
